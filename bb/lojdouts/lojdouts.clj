@@ -42,6 +42,12 @@
 
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
+(defn nodes-of
+  [edn-file]
+  (-> edn-file
+      slurp
+      edn-nodes))
+
 (defn merge*
   "Merge values from map `m` into node `node`."
   [node m]
@@ -59,13 +65,31 @@
     (merge* a (for [[k v] b] [k (deep-merge* (r/get a k) v)]))
     b))
 
-(defn greet
-  "Callable entry point to the application."
-  [data]
-  (println (str "Hello, " (or (:name data) "World") "!")))
+(defn merge-loadout
+  "Merge contents of the named loadout into the target deps-file (usually 
+  deps.edn or bb.edn).
+  
+  Returns the new nodes."
+  [deps-file loname]
+  (let [lo         (get loadouts loname)
+        deps-nodes (nodes-of deps-file)]
+    ;(print {:lo lo :nodes deps-nodes})
+    (deep-merge* deps-nodes lo)))
+
+(defn add-loadout!
+  [deps-file loname]
+  (spit deps-file (merge-loadout deps-file loname)))
+
+(defn list-loadouts! [] (println (keys loadouts)))
+
+(comment
+  (add-loadout! (str (fs/cwd) "/deps.edn") :mysql)
+  (merge-loadout (str (fs/cwd) "/deps.edn") :mysql)
+  (add-tap println))
 
 (def command-table
-  [{:cmds [] :fn (partial merge-loadout "deps.edn" ) :args->opts [:loadout]}])
+  [{:cmds [], :fn (partial add-loadout! "deps.edn"), :args->opts [:loadout]}
+   {:cmds ["bb"], :fn (partial add-loadout! "bb.edn"), :args->opts [:loadout]}])
 
 (def spec
   {:lofile    {:desc "Use a specific loadout-file", :coerce :string, :alias :f},
@@ -79,12 +103,15 @@
                :coerce :boolean,
                :alias  :e}})
 
+;; Recommending adding a `lojd` alias set as `lojb`, which is set to `lojd
+;; --bb`
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
   (cli/dispatch command-table
-                *command-line-args*
+                args
                 {:spec spec, :exec-args {:deps-file "deps.edn"}})
   nil)
 
-(when (= *file* (System/getProperty "babashka.file")) (-main))
+(when (= *file* (System/getProperty "babashka.file"))
+  (apply -main *command-line-args*))
