@@ -1,9 +1,3 @@
-(require '[babashka.deps :as deps])
-(deps/add-deps '{:deps {org.clojure/clojure  {:mvn/version "1.11.1"},
-                        aero/aero            {:mvn/version "1.1.6"},
-                        borkdude/rewrite-edn {:mvn/version "0.4.6"},
-                        org.babashka/cli     {:mvn/version "0.6.49"}}})
-
 (ns lojdouts.lojdouts
   (:require [babashka.fs :as fs]
             [borkdude.rewrite-edn :as r]
