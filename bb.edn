@@ -1,4 +1,4 @@
-{:paths ["bb"]
+{:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         aero/aero {:mvn/version "1.1.6"}
         borkdude/rewrite-edn {:mvn/version "0.4.6"}
@@ -20,9 +20,9 @@
                     [babashka.fs :as fs])
          :task (let [shebang "#!/usr/bin/env bb"]
                  (do (fs/create-dir "./target")
-                     (proc/shell "bb uberscript lojd -f bb/lojdouts/lojdouts.clj")
+                     (proc/shell "bb uberscript lojd -f src/lojdouts/lojdouts.clj")
                      (spit "./lojd" (format "%s\n\n%s" shebang (slurp "./lojd")))
-                     (fs/set-posix-file-permissions "./lojd" "rwxrwxrwx")
+                     (fs/set-posix-file-permissions "./lojd" "rwxr--r--")
                      (fs/move "./lojd" "./target/lojd")))}
   build:clean {:doc "Cleans the target dir and then creates an uberscript there"
                :task (do (run 'clean)
